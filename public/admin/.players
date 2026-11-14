@@ -1,0 +1,4 @@
+newFolder:
+    defaultWebpageId: CT000001
+    loginRedirectWebpageId: CT000003
+    defaultTran: CTFP

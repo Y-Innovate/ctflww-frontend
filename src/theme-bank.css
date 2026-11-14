@@ -1,0 +1,117 @@
+/* Experiment: a look in the style of a Dutch retail bank. A deep blue top
+   bar, orange for the main action, blue for links and active tabs, a cool
+   grey-blue page, and rounded buttons on soft cards.
+   This file only overrides styles.css: remove its import in main.jsx to get
+   the house style back. */
+
+:root {
+  --ctf-bg-1: #ffffff;
+  --ctf-bg-2: #f1f4f9;
+  --ctf-bg-3: #eaeff6;
+  --ctf-fg-1: #0b1d42;
+  --ctf-fg-2: #4b5a78;
+  --ctf-fg-3: #8592ad;
+  --ctf-line: rgba(0, 38, 110, 0.11);
+  --ctf-line-strong: rgba(0, 38, 110, 0.24);
+  --ctf-info-bg: #e3eef9;
+  --ctf-info-fg: #0060ae;
+
+  --ctf-brand: #0060ae;
+  --ctf-orange: #f66a00;
+  --ctf-orange-hover: #dc5e00;
+  --ctf-header-bg: #00266e;
+  --ctf-header-fg: #ffffff;
+  --ctf-header-fg-2: rgba(255, 255, 255, 0.72);
+  --ctf-header-hover: rgba(255, 255, 255, 0.12);
+  --ctf-accent: var(--ctf-orange);
+  --ctf-accent-fg: #ffffff;
+  --ctf-shadow: 0 1px 2px rgba(0, 38, 110, 0.06), 0 2px 8px rgba(0, 38, 110, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ctf-bg-1: #121c33;
+    --ctf-bg-2: #1a2642;
+    --ctf-bg-3: #0b1324;
+    --ctf-fg-1: #edf1f9;
+    --ctf-fg-2: #9eabc6;
+    --ctf-fg-3: #66738f;
+    --ctf-line: rgba(255, 255, 255, 0.08);
+    --ctf-line-strong: rgba(255, 255, 255, 0.16);
+    --ctf-info-bg: #0b2a52;
+    --ctf-info-fg: #b5d4f4;
+
+    --ctf-brand: #6aa9ea;
+    --ctf-header-bg: #0a1a40;
+    --ctf-shadow: none;
+  }
+}
+
+/* Unlayered, so these win over Tailwind's components layer */
+
+.app-header {
+  border-bottom-color: transparent;
+}
+/* The brand mark in the top bar */
+.app-header .bg-brand {
+  background: var(--ctf-orange);
+}
+.header-link-active {
+  box-shadow: inset 0 -2px 0 var(--ctf-orange);
+  border-radius: 6px 6px 0 0;
+}
+.app-header .header-signin {
+  color: var(--ctf-header-fg);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+.app-header .header-signin:hover {
+  background: var(--ctf-header-hover);
+}
+
+.tab-active {
+  background: transparent;
+  color: var(--ctf-brand);
+  box-shadow: inset 0 -2px 0 var(--ctf-brand);
+  border-radius: 6px 6px 0 0;
+}
+.tab:hover {
+  color: var(--ctf-brand);
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  border-radius: 9999px;
+  padding-inline: 1.1rem;
+}
+.btn-primary {
+  transition: background-color 0.15s;
+}
+.btn-primary:not(:disabled):hover {
+  opacity: 1;
+  background: var(--ctf-orange-hover);
+}
+.btn-secondary {
+  border-width: 1px;
+  border-color: var(--ctf-brand);
+  color: var(--ctf-brand);
+}
+
+.card {
+  border-radius: 14px;
+  box-shadow: var(--ctf-shadow);
+}
+
+.input:focus {
+  border-color: var(--ctf-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ctf-brand) 18%, transparent);
+}
+
+main a.underline {
+  color: var(--ctf-brand);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ctf-brand);
+  outline-offset: 2px;
+}

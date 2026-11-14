@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Y-Innovate CTF</title>
+<base href="/ctf/" target="_self">
+</head>
+<body>
+<p>Signing you in&hellip; If nothing happens, <a href="/ctf">continue here</a>.</p>
+<script>
+// LWW fills in &NEXTPAGE; after its sign-in program ran: "true" when the
+// session is there. The login page left the page to return to in
+// sessionStorage (only a path under /ctf, never a passphrase). LWW refuses
+// paths that end in "/", so /ctf/ becomes /ctf and /ctf/my/ becomes /ctf/my.
+(function () {
+  var requested = sessionStorage.getItem('requestedURL');
+  sessionStorage.removeItem('requestedURL');
+  var safe = typeof requested === 'string' && /^\/ctf(\/|\?|$)/.test(requested) && requested.indexOf('//') === -1;
+  var target = safe ? requested.replace(/\/+(\?|$)/, '$1') : '/ctf';
+  if ("&NEXTPAGE;" === "true") {
+    window.location.replace(target);
+  } else {
+    window.location.replace('/ctf/login?failed=1');
+  }
+})();
+</script>
+</body>
+</html>
