@@ -10,7 +10,7 @@
    src/styles.css, copied, because the built CSS has a hashed name */
 :root {
   --bg-1: #ffffff; --bg-3: #efefed; --fg-1: #1a1a18; --fg-2: #6b6b67;
-  --line: rgba(0, 0, 0, 0.10); --brand: #378add;
+  --line: rgba(0, 0, 0, 0.10); --brand: #f66a00;
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
@@ -28,7 +28,12 @@ main {
   border: 0.5px solid var(--line); border-radius: 8px; background: var(--bg-1);
 }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 500; letter-spacing: -0.3px; }
-.brand::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
+/* The elephant of public/olifantje.svg as a mask, in the brand color */
+.brand::before {
+  content: ""; flex-shrink: 0; width: 22px; height: 18px; background: var(--brand);
+  -webkit-mask: url(/ctf/olifantje.svg) center / contain no-repeat;
+  mask: url(/ctf/olifantje.svg) center / contain no-repeat;
+}
 h1 { margin: 16px 0 0; font-size: 17px; font-weight: 500; }
 p { margin: 4px 0 0; font-size: 13px; color: var(--fg-2); }
 a.button {
