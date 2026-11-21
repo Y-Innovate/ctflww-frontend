@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { closeEvent, createEvent, deleteEvent, getAdminEvent, refTables, updateEvent } from '../../api/admin'
+import { archiveEvent, closeEvent, createEvent, deleteEvent, getAdminEvent, refTables, restoreEvent, updateEvent } from '../../api/admin'
 import ConfirmButton from '../../components/ConfirmButton'
 import Announcements from './event/Announcements'
 import ErrorBanner from '../../components/ErrorBanner'
 import { useFullList } from '../../hooks/useFullList'
+import { isArchived, isReadOnly } from '../../lib/codes'
 import { formatTs } from '../../lib/timestamps'
 import { ADMIN_PATHS, linkTo, PATHS } from '../../routes'
 import EventChallenges from './event/EventChallenges'
@@ -121,8 +122,14 @@ function EventPage({ eventID, tab }) {
               or done by, the batch.
             </p>
           )}
+          {isArchived(event) && (
+            <p className="rounded-md bg-surface-2 px-4 py-2.5 text-[13px] text-fg-2">
+              This event is archived: it is read-only, and left out of the public event list and the
+              current admin list. Its public page and leaderboard can still be opened, also from the archive.
+            </p>
+          )}
           <EventForm event={event} groups={groups} locked={event.playerCount > 0}
-            readOnly={event.eventStatus === 'C'} submitLabel="Save"
+            readOnly={isReadOnly(event)} submitLabel="Save"
             onSubmit={async (values) => {
               await updateEvent(eventID, values)
               reload()
@@ -134,7 +141,8 @@ function EventPage({ eventID, tab }) {
   )
 }
 
-// Publish, back to draft, delete: on the saved event, not on unsaved changes
+// Publish, back to draft, delete, close, archive, restore: on the saved event,
+// not on unsaved changes
 function EventActions({ event, onChange }) {
   const navigate = useNavigate()
   const [error, setError] = useState(null)
@@ -159,6 +167,16 @@ function EventActions({ event, onChange }) {
     }
   }
 
+  async function archive(restore) {
+    setError(null)
+    try {
+      await (restore ? restoreEvent : archiveEvent)(event.eventID)
+      onChange()
+    } catch (err) {
+      setError(err)
+    }
+  }
+
   async function remove() {
     setError(null)
     try {
@@ -169,13 +187,14 @@ function EventActions({ event, onChange }) {
     }
   }
 
-  if (event.eventStatus === 'C') return null
   const draft = event.eventStatus === 'D'
   return (
     <section className="card flex flex-col gap-3 p-6" aria-labelledby="actions-title">
       <h2 id="actions-title" className="text-[15px] font-medium">Status</h2>
       {error && <ErrorBanner error={error.isWrongState && error.infoMessage ? `${error.infoMessage}.` : error} />}
-      {draft ? (
+      {isReadOnly(event) ? (
+        <ArchiveActions event={event} onArchive={archive} />
+      ) : draft ? (
         <>
           <p className="text-[13px] text-fg-2">
             A draft is only visible to organizers. Publishing needs at least one visible challenge; save your
@@ -220,5 +239,34 @@ function EventActions({ event, onChange }) {
         </>
       )}
     </section>
+  )
+}
+
+// A10: a closed event can be archived, an archived one restored to closed
+function ArchiveActions({ event, onArchive }) {
+  if (isArchived(event)) {
+    return (
+      <>
+        <p className="text-[13px] text-fg-2">
+          Archived. Restoring makes it closed again: back on the public event list and the current admin list.
+        </p>
+        <div>
+          <ConfirmButton label="Restore" icon="ti-archive-off" confirmLabel="Restore"
+            question="Restore this event to closed?" onConfirm={() => onArchive(true)} />
+        </div>
+      </>
+    )
+  }
+  return (
+    <>
+      <p className="text-[13px] text-fg-2">
+        Closed. Archiving takes the event off the public event list and the current admin list; it stays
+        read-only, and its page and leaderboard stay viewable from the archive. It can be restored.
+      </p>
+      <div>
+        <ConfirmButton label="Archive" icon="ti-archive" confirmLabel="Archive"
+          question="Archive this event?" onConfirm={() => onArchive(false)} />
+      </div>
+    </>
   )
 }

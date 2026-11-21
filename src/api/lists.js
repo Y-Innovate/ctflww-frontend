@@ -42,7 +42,8 @@ export function defineList({ path, listKey, since }) {
 
 const enc = encodeURIComponent
 
-// Public
+// Public. Published and closed events, newest first; eventStatus_filter A
+// lists the archived ones instead.
 export const events = defineList({
   path: '/events', listKey: 'events', since: [['eventID_since', 'eventID']],
 })

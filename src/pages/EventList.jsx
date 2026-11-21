@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { events } from '../api/lists'
 import ErrorBanner from '../components/ErrorBanner'
 import LoadMore from '../components/LoadMore'
@@ -9,17 +9,35 @@ import { formatRange } from '../lib/timestamps'
 import { linkTo, PATHS } from '../routes'
 
 const NO_FILTERS = {}
+const ARCHIVE_FILTERS = { eventStatus_filter: 'A' }
 
-// V1: published and closed events, newest first, 20 at a time
+// V1: published and closed events, newest first, 20 at a time; with
+// ?archive=1 the archived events (A10) instead
 export default function EventList() {
-  const list = usePagedList(events, NO_FILTERS)
+  const [params, setParams] = useSearchParams()
+  const archive = params.get('archive') === '1'
+  const list = usePagedList(events, archive ? ARCHIVE_FILTERS : NO_FILTERS)
+
+  const views = [[false, 'Events'], [true, 'Archive']]
+  const setArchive = (value) => setParams(value ? { archive: '1' } : {}, { replace: true })
 
   return (
     <section className="flex flex-col gap-4">
-      <h1 className="text-[17px] font-medium">Events</h1>
+      <header className="flex flex-wrap items-center gap-3">
+        <h1 className="text-[17px] font-medium">{archive ? 'Archived events' : 'Events'}</h1>
+        <div className="flex gap-1" role="group" aria-label="Which events">
+          {views.map(([value, title]) => (
+            <button key={title} type="button" aria-pressed={archive === value}
+              className={`rounded-md px-2.5 py-1 text-[13px] ${archive === value ? 'bg-surface-2 font-medium' : 'text-fg-2 hover:bg-surface-2'}`}
+              onClick={() => setArchive(value)}>
+              {title}
+            </button>
+          ))}
+        </div>
+      </header>
       {list.error && <ErrorBanner error={list.error} onRetry={list.reload} />}
       {!list.loading && !list.error && list.rows.length === 0 && (
-        <p className="card p-6 text-fg-2">There are no events yet.</p>
+        <p className="card p-6 text-fg-2">{archive ? 'There are no archived events.' : 'There are no events yet.'}</p>
       )}
       <ul className="grid gap-3 sm:grid-cols-2">
         {list.rows.map((e) => (

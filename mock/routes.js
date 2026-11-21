@@ -41,6 +41,8 @@ export const ROUTES = [
 
   // Admin (PLAN-ADMIN.md)
   ['POST', '/admin/eventClosures/:id', ADMIN, (db, r) => db.closeEvent(r.user, r.id)],
+  ['POST', '/admin/eventArchives/:id', ADMIN, (db, r) => db.archiveEvent(r.user, r.id, true)],
+  ['DELETE', '/admin/eventArchives/:id', ADMIN, (db, r) => db.archiveEvent(r.user, r.id, false)],
   ['GET', '/admin/events/:id', ADMIN, (db, r) => db.adminEvent(r.id)],
   ['GET', '/admin/events', ADMIN, (db, r) => db.adminEvents(r.query)],
   ['POST', '/admin/events', ADMIN, (db, r) => db.createEvent(r.user, r.body)],

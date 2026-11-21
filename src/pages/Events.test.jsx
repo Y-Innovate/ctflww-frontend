@@ -31,6 +31,22 @@ describe('the events list', () => {
     expect(within(screen.getByText('Frozen Night CTF').closest('a')).getByText('Frozen')).toBeInTheDocument()
   })
 
+  it('shows the archived events in the archive, and opens them', async () => {
+    stubBackend()
+    openApp('/')
+    await screen.findByText('Spring Team CTF')
+    expect(screen.queryByText('Spring CTF 2025')).not.toBeInTheDocument()
+    screen.getByRole('button', { name: 'Archive' }).click()
+    const spring = (await screen.findByText('Spring CTF 2025')).closest('a')
+    expect(window.location.search).toBe('?archive=1')
+    expect(within(spring).getByText('Archived')).toBeInTheDocument()
+    expect(screen.queryByText('Spring Team CTF')).not.toBeInTheDocument()
+    spring.click()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Spring CTF 2025' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /leaderboard/i })).toHaveAttribute('href', '/ctf/leaderboard?eventID=7')
+    expect(screen.getByRole('link', { name: 'All archived events' })).toHaveAttribute('href', '/ctf?archive=1')
+  })
+
   it('says so when there are none, and offers no "more" for one page', async () => {
     const { db } = stubBackend()
     db.data.events = []

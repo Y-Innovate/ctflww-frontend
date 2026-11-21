@@ -53,6 +53,7 @@ export function createAdmin({ d, now, phaseOf, later }) {
       if (f.eventStatus !== 'D') refuse('08', '03', 'A new event is a DRAFT: eventStatus must be D')
     } else {
       if (f.eventStatus === 'C') refuse('08', '53', 'Close an event with POST /admin/eventClosures')
+      if (f.eventStatus === 'A') refuse('08', '53', 'Archive an event with POST /admin/eventArchives')
       if (f.eventStatus !== 'D' && f.eventStatus !== 'P') refuse('08', '03', 'eventStatus must be D or P')
     }
     if (f.playMode !== 'I' && f.playMode !== 'T') refuse('08', '03', 'playMode must be I or T')
@@ -82,7 +83,7 @@ export function createAdmin({ d, now, phaseOf, later }) {
     const places = d.participants.filter((x) => x.eventID === e.eventID).length
     const maxMembers = Math.max(0, ...d.teams.filter((t) => t.eventID === e.eventID).map((t) => t.memberCount))
     const visible = d.eventChallenges.filter((ec) => ec.eventID === e.eventID && ec.isVisible === 'Y').length
-    if (e.eventStatus === 'C') refuse('08', '53', 'A closed event cannot be changed')
+    if (e.eventStatus === 'C' || e.eventStatus === 'A') refuse('08', '53', 'A closed or archived event cannot be changed')
     if (f.eventStatus === 'P' && e.eventStatus === 'D' && visible === 0) {
       refuse('08', '53', 'Publishing needs at least one visible challenge')
     }
@@ -228,11 +229,11 @@ export function createAdmin({ d, now, phaseOf, later }) {
   const linkOps = childOps('links', 'linkID', checkLink, 'Link not found')
 
   // ---- Challenges of an event (CTFM011, CTFM012, CTFM412) ---------------
-  // R030: the event exists and isn't closed
+  // R030: the event exists and isn't closed or archived
   function openEvent(eventID) {
     const e = eventOf(eventID)
     if (!e) refuse('08', '13', 'Event not found')
-    if (e.eventStatus === 'C') refuse('08', '53', 'The event is closed')
+    if (e.eventStatus === 'C' || e.eventStatus === 'A') refuse('08', '53', 'The event is closed or archived')
     return e
   }
   const ecRowOf = (eventID, challengeID) =>
@@ -629,7 +630,7 @@ export function createAdmin({ d, now, phaseOf, later }) {
         const reason = text(body.reverseReason)
         if (!reason || reason.length > 255) refuse('08', '02', 'reverseReason is required, up to 255 characters')
         const e = eventOf(body.eventID)
-        if (e?.eventStatus === 'C') refuse('08', '53', 'The event is closed')
+        if (e?.eventStatus === 'C' || e?.eventStatus === 'A') refuse('08', '53', 'The event is closed or archived')
         const solve = d.solves.find((x) => x.eventID === int(body.eventID) && x.challengeID === int(body.challengeID) &&
           x.teamID === int(body.teamID))
         if (!solve) refuse('08', '41', 'No solve to reverse')
@@ -747,6 +748,22 @@ export function createAdmin({ d, now, phaseOf, later }) {
       })
     },
 
+    // ---- Archiving (CTFM540) ----
+    // POST: CLOSED to ARCHIVED; DELETE: back. Only the status changes.
+    archiveEvent(userid, eventID, archive) {
+      return run(() => {
+        const e = eventOf(eventID)
+        if (!e) refuse('04', '01', 'Event not found')
+        const [from, to] = archive ? ['C', 'A'] : ['A', 'C']
+        if (e.eventStatus !== from) {
+          refuse('08', '53', archive ? 'Only a closed event can be archived' : 'Only an archived event can be restored')
+        }
+        e.eventStatus = to
+        touch(userid, e, {})
+        return ok({ eventID: e.eventID, eventStatus: to })
+      })
+    },
+
     settleJobs,
 
     // Find players by ID; name and userid from the start, regardless of case
@@ -819,12 +836,13 @@ export function createAdmin({ d, now, phaseOf, later }) {
       })
     },
 
-    // CTFM402: all events by EVENTID, drafts and closed ones too; status filter
+    // CTFM402: all events by EVENTID, drafts and closed ones too; status
+    // filter. Without it, archived events are left out.
     adminEvents(query) {
       const status = upper(query.eventStatus_filter)
       const since = int(query.eventID_since)
       const rows = d.events
-        .filter((e) => (!status || e.eventStatus === status) && e.eventID > since)
+        .filter((e) => (status ? e.eventStatus === status : e.eventStatus !== 'A') && e.eventID > since)
         .sort((a, b) => a.eventID - b.eventID)
         .map(adminEventRow)
       return ok({ events: page(rows) })

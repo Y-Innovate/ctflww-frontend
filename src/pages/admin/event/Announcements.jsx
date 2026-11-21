@@ -5,6 +5,7 @@ import ErrorBanner from '../../../components/ErrorBanner'
 import Field from '../../../components/Field'
 import LoadMore from '../../../components/LoadMore'
 import { usePagedList } from '../../../hooks/usePagedList'
+import { eventPhase, isReadOnly } from '../../../lib/codes'
 import { formatTs, isBlank } from '../../../lib/timestamps'
 
 const TITLE_MAX = 100
@@ -13,14 +14,14 @@ const BODY_MAX = 1000
 const errorText = (err) => (err.isWrongState && err.infoMessage ? `${err.infoMessage}.` : err)
 
 // A8: write, correct and delete the announcements of an event, newest first.
-// Players poll for them every minute (P9). Also on a draft; a closed event
+// Players poll for them every minute (P9). Also on a draft; a closed or archived event
 // is read-only.
 export default function Announcements({ event }) {
   const eventID = event.eventID
   const list = usePagedList(adminAnnouncements, { eventID })
   const [editing, setEditing] = useState(null)
   const [error, setError] = useState(null)
-  const closed = event.eventStatus === 'C'
+  const closed = isReadOnly(event)
 
   async function remove(announceID) {
     setError(null)
@@ -35,7 +36,7 @@ export default function Announcements({ event }) {
   return (
     <div className="flex flex-col gap-4">
       {closed ? (
-        <p className="rounded-md bg-surface-2 px-4 py-2.5 text-[13px] text-fg-2">This event is closed: its announcements can no longer change.</p>
+        <p className="rounded-md bg-surface-2 px-4 py-2.5 text-[13px] text-fg-2">This event is {eventPhase(event).toLowerCase()}: its announcements can no longer change.</p>
       ) : (
         <section className="card flex flex-col gap-3 p-6" aria-labelledby="new-announcement-title">
           <h2 id="new-announcement-title" className="text-[15px] font-medium">New announcement</h2>

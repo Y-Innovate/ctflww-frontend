@@ -9,7 +9,7 @@ import { useFullList } from '../../../hooks/useFullList'
 import { usePagedList } from '../../../hooks/usePagedList'
 import { usePolling } from '../../../hooks/usePolling'
 import { PAGE_SIZE } from '../../../api/lists'
-import { isYes } from '../../../lib/codes'
+import { isReadOnly, isYes } from '../../../lib/codes'
 import { formatTs, isBlank } from '../../../lib/timestamps'
 import { usePlayerNames } from '../usePlayerNames'
 
@@ -32,7 +32,7 @@ export default function Monitor({ event }) {
   const submissions = usePagedList(adminSubmissions, { ...filters, ...(correct && { isCorrect_filter: correct }) })
   const solves = usePagedList(adminSolves, filters)
   const live = event.eventStatus === 'P' && (event.phase === 'R' || event.phase === 'F')
-  const closed = event.eventStatus === 'C'
+  const closed = isReadOnly(event)
 
   // Only the first pages: a refresh would close the pages opened below them
   usePolling(() => {

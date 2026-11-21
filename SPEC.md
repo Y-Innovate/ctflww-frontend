@@ -28,8 +28,9 @@ organizers. The build order is in PLAN.md (F1 to F3) and PLAN-ADMIN.md (F4 to F6
 
 ### Events (V1), public, start page
 - Published and closed events, newest first, 20 at a time with "more".
-- Per event: name, dates, phase (Upcoming, Running, Frozen, Ended, Closed), play
-  mode (individual or teams) and whether registration is open.
+  An "Archive" toggle (`?archive=1`) lists the archived events instead (A10).
+- Per event: name, dates, phase (Upcoming, Running, Frozen, Ended, Closed,
+  Archived), play mode (individual or teams) and whether registration is open.
 - Opening one shows the description too, with links to the leaderboard, and to
   register (if registration is open) or, for a signed-in player, to join.
 
@@ -99,7 +100,8 @@ Players and Jobs. Admin and challenge author are one role in v1.
 
 ### Admin events (A1), `/ctf/admin`
 - All events, drafts included, newest first: name, status, phase, dates,
-  players / cap. A "New event" button.
+  players / cap. A "New event" button. Status filter: Current (all but
+  archived), Drafts, Published, Closed, Archived.
 
 ### Event (A1, A3; A4, A7 to A9 in F5), `/ctf/admin/event?eventID=&tab=`
 - Without `eventID`: the form for a new DRAFT.
@@ -108,7 +110,8 @@ Players and Jobs. Admin and challenge author are one role in v1.
 - Settings: name, description, play mode and team size, start, freeze, end,
   registration code and window, cap, RACF group (from the allowlist). Play
   mode and RACF group are read-only once someone has joined. Publish (refused
-  without a visible challenge), delete (a draft only, with its challenges, prerequisites and announcements), and in F5 Close.
+  without a visible challenge), delete (a draft only, with its challenges, prerequisites and announcements), and in F5 Close. A closed event can be
+  archived, and an archived one restored to closed (A10); both are read-only.
   Start < freeze < end is checked in the form too.
 - Challenges: the event's challenges in order with scoring, attempts,
   visibility and prerequisites (the admin list has no solve counts; the

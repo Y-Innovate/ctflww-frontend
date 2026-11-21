@@ -155,6 +155,12 @@ export function buildSeed(now = new Date()) {
       eventStatus: 'D', startTS: t({ days: 30 }), endTS: t({ days: 31 }),
       regFromTS: t({ days: 20 }), regToTS: t({ days: 30 }),
     }),
+    event(7, 'Spring CTF 2025', {
+      eventDescription: 'Archived: only in the archive, but still readable.',
+      eventStatus: 'A', playMode: 'I', maxTeamSize: 1,
+      startTS: t({ days: -200 }), endTS: t({ days: -199 }),
+      regCode: 'SPRING-2025', regFromTS: t({ days: -210 }), regToTS: t({ days: -200 }),
+    }),
   ]
 
   const ec = (eventID, challengeID, sortOrder, fields = {}) => ({

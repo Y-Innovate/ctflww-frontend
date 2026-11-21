@@ -10,7 +10,8 @@ import { defineList } from './lists'
 // has a place, play mode and RACF group are locked. Only a DRAFT can be
 // deleted. A PUT sends every field.
 
-// Every event by ID, drafts and closed ones too; filter eventStatus_filter
+// Every event by ID, drafts and closed ones too; filter eventStatus_filter.
+// Without the filter, archived events are left out; filter A lists them.
 export const adminEvents = defineList({
   path: '/admin/events', listKey: 'events', since: [['eventID_since', 'eventID']],
 })
@@ -42,6 +43,18 @@ export function deleteEvent(eventID) {
 // Answers eventID and eventStatus C. A closed event can't change any more.
 export function closeEvent(eventID) {
   return apiRequest('POST', `/admin/eventClosures/${encodeURIComponent(eventID)}`)
+}
+
+// A10 (CTFM540): archives a closed event (else 08 53). It stays read-only and
+// viewable, but leaves the event lists unless they ask for status A.
+// Answers eventID and eventStatus A.
+export function archiveEvent(eventID) {
+  return apiRequest('POST', `/admin/eventArchives/${encodeURIComponent(eventID)}`)
+}
+
+// A10: an archived event back to closed (else 08 53). Answers eventStatus C.
+export function restoreEvent(eventID) {
+  return apiRequest('DELETE', `/admin/eventArchives/${encodeURIComponent(eventID)}`)
 }
 
 // ---- Reference tables (CTFM001, CTFM401) ----

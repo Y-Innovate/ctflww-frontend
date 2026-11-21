@@ -6,7 +6,7 @@ import PhaseBadge from '../components/PhaseBadge'
 import { useSession } from '../context/SessionContext'
 import { useEvent } from '../hooks/useEvent'
 import { useMyPlace } from '../hooks/useMyPlace'
-import { isYes } from '../lib/codes'
+import { isArchived, isReadOnly, isYes } from '../lib/codes'
 import { formatRange, formatTs, isBlank } from '../lib/timestamps'
 import { linkTo, PATHS } from '../routes'
 
@@ -16,7 +16,7 @@ function playModeText(e) {
 
 function freezeText(e) {
   if (isBlank(e.freezeTS)) return null
-  return e.phase === 'F' || e.eventStatus === 'C' ? `Frozen since ${formatTs(e.freezeTS)}` : `Freezes at ${formatTs(e.freezeTS)}`
+  return e.phase === 'F' || isReadOnly(e) ? `Frozen since ${formatTs(e.freezeTS)}` : `Freezes at ${formatTs(e.freezeTS)}`
 }
 
 // V1: one event, with what the reader can do next
@@ -25,7 +25,10 @@ export default function EventDetail({ eventID }) {
   const state = useEvent(eventID)
   const place = useMyPlace(eventID, isPlayer)
 
-  const back = <Link className="text-[13px] text-fg-2 underline" to={PATHS.events}>All events</Link>
+  const archived = state.event && isArchived(state.event)
+  const back = archived
+    ? <Link className="text-[13px] text-fg-2 underline" to={linkTo(PATHS.events, { archive: 1 })}>All archived events</Link>
+    : <Link className="text-[13px] text-fg-2 underline" to={PATHS.events}>All events</Link>
 
   if (state.loading) return back
   if (state.error) {

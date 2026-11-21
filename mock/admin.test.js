@@ -27,6 +27,10 @@ describe('admin events (CTFM402)', () => {
     expect(events[0]).not.toHaveProperty('regCode')
   })
 
+  it('leaves out archived events, unless the filter asks for them', () => {
+    expect(get('/admin/events', 'ADMIN01', { eventStatus_filter: 'A' }).body.events.map((e) => e.eventID)).toEqual([7])
+  })
+
   it('filters on status and pages after an ID', () => {
     expect(get('/admin/events', 'ADMIN01', { eventStatus_filter: 'd' }).body.events.map((e) => e.eventID)).toEqual([6])
     expect(get('/admin/events', 'ADMIN01', { eventID_since: '4' }).body.events.map((e) => e.eventID)).toEqual([5, 6])
@@ -97,7 +101,7 @@ describe('events (CTFM002)', () => {
   it('creates a DRAFT, with the group in upper case', () => {
     const r = call('POST', '/admin/events', valid)
     expect(r.status).toBe(201)
-    expect(r.body).toMatchObject({ eventID: 7, eventStatus: 'D', racfGroup: 'CTFTEST', regCode: 'TEST-2027', phase: '' })
+    expect(r.body).toMatchObject({ eventID: 8, eventStatus: 'D', racfGroup: 'CTFTEST', regCode: 'TEST-2027', phase: '' })
     expect(reason(call('POST', '/admin/events', { ...valid, eventStatus: 'P' }))).toBe('08 03')
   })
 
@@ -385,6 +389,40 @@ describe('closing an event (CTFM502)', () => {
     expect(revokes.map((j) => j.playerID)).toEqual([10])
     expect(reason(dispatch(db, { method: 'POST', path: '/admin/announcements', user: 'ADMIN01', query: {},
       body: { eventID: 4, announceTitle: 'x', announceBody: 'y' } }))).toBe('08 53')
+  })
+})
+
+describe('archiving an event (CTFM540)', () => {
+  const call = (method, path, body = {}) => dispatch(db, { method, path, user: 'ADMIN01', query: {}, body })
+  const reason = (r) => `${r.body.retCode} ${r.body.reasonCode}`
+  const ids = (path, query) => dispatch(db, { method: 'GET', path, user: null, query }).body.events.map((e) => e.eventID)
+
+  it('archives only a closed event, and restores only an archived one', () => {
+    expect(reason(call('POST', '/admin/eventArchives/1'))).toBe('08 53') // published
+    expect(reason(call('POST', '/admin/eventArchives/6'))).toBe('08 53') // draft
+    expect(reason(call('POST', '/admin/eventArchives/7'))).toBe('08 53') // archived already
+    expect(reason(call('DELETE', '/admin/eventArchives/5'))).toBe('08 53') // closed, not archived
+    expect(call('POST', '/admin/eventArchives/99').status).toBe(404)
+
+    expect(call('POST', '/admin/eventArchives/5').body).toMatchObject({ eventID: 5, eventStatus: 'A' })
+    expect(call('DELETE', '/admin/eventArchives/5').body).toMatchObject({ eventID: 5, eventStatus: 'C' })
+  })
+
+  it('takes it off the public list, except the archive; it stays readable', () => {
+    call('POST', '/admin/eventArchives/5')
+    expect(ids('/events', {})).toEqual([4, 3, 2, 1])
+    expect(ids('/events', { eventStatus_filter: 'A' })).toEqual([7, 5])
+    expect(ids('/events', { eventStatus_filter: 'D' })).toEqual([])
+    expect(dispatch(db, { method: 'GET', path: '/events/5', user: null, query: {} }).body).toMatchObject({ eventStatus: 'A' })
+    expect(dispatch(db, { method: 'GET', path: '/leaderboard/5', user: null, query: {} }).status).toBe(200)
+  })
+
+  it('keeps it read-only', () => {
+    expect(reason(call('POST', '/admin/announcements', { eventID: 7, announceTitle: 'x', announceBody: 'y' }))).toBe('08 53')
+    const e = call('GET', '/admin/events/7').body
+    expect(reason(call('PUT', '/admin/events/7', { ...e, eventStatus: 'P' }))).toBe('08 53')
+    expect(reason(call('PUT', '/admin/events/1', { ...call('GET', '/admin/events/1').body, eventStatus: 'A' }))).toBe('08 53')
+    expect(reason(call('POST', '/admin/eventClosures/7'))).toBe('08 53')
   })
 })
 

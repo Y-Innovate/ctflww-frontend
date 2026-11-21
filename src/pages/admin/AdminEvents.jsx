@@ -8,14 +8,16 @@ import { ADMIN_PATHS, linkTo } from '../../routes'
 import StatusBadge from './StatusBadge'
 
 const FILTERS = [
-  ['', 'All'],
+  ['', 'Current'],
   ['D', 'Drafts'],
   ['P', 'Published'],
   ['C', 'Closed'],
+  ['A', 'Archived'],
 ]
 
 // A1: every event, drafts and closed ones too, by ID (as CTFM402 lists
-// them); the status filter is in the query string.
+// them); the status filter is in the query string. Without a filter
+// ("Current") CTFM402 leaves out the archived events (A10).
 export default function AdminEvents() {
   const [params, setParams] = useSearchParams()
   const status = params.get('status') ?? ''
@@ -44,7 +46,8 @@ export default function AdminEvents() {
 
       {list.error && <ErrorBanner error={list.error} onRetry={list.reload} />}
       {!list.loading && !list.error && list.rows.length === 0 && (
-        <p className="card p-6 text-fg-2">{status ? 'No events with this status.' : 'No events yet. Start with "New event".'}</p>
+        <p className="card p-6 text-fg-2">{status === 'A' ? 'No archived events. A closed event can be archived from its page.'
+            : status ? 'No events with this status.' : 'No events yet. Start with "New event".'}</p>
       )}
       {list.rows.length > 0 && (
         <div className="card overflow-x-auto">

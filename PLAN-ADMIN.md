@@ -75,6 +75,12 @@ Agreed 2026-11-11:
 
 Checklist for t01: `docs/test-F5.md`.
 
+## Iteration F7: archiving past events
+- [x] 26. Archive a closed event and restore it (`POST`/`DELETE
+  /admin/eventArchives`, backend iteration 6); "Archived" filter on the admin
+  list; "Archive" toggle on the public event list; archived events read-only
+  everywhere, like closed ones.
+
 ## Iteration F6: players and RACF jobs
 - [x] 24. Players: find, details, reset passphrase (claim token shown once),
   revoke, resume, delete the userid of a revoked player.

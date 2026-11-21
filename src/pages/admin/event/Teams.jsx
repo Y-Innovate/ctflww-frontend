@@ -3,6 +3,7 @@ import { adminAwards, adminLeaderboard, adminTeams, deleteAward, giveAward } fro
 import ConfirmButton from '../../../components/ConfirmButton'
 import ErrorBanner from '../../../components/ErrorBanner'
 import { useFullList } from '../../../hooks/useFullList'
+import { isReadOnly } from '../../../lib/codes'
 import { formatTs } from '../../../lib/timestamps'
 import { usePlayerNames } from '../usePlayerNames'
 
@@ -15,7 +16,7 @@ export default function Teams({ event }) {
   const board = useFullList(adminLeaderboard, { eventID })
   const awards = useFullList(adminAwards, { eventID })
   const [error, setError] = useState(null)
-  const closed = event.eventStatus === 'C'
+  const closed = isReadOnly(event)
   const individual = event.playMode === 'I'
   const word = individual ? 'player' : 'team'
 

@@ -1,7 +1,7 @@
 // The backend's one-letter codes in words. Values from ctf_1.0.0.yaml.
 
 export const PHASE = { U: 'Upcoming', R: 'Running', F: 'Frozen', E: 'Ended' }
-export const EVENT_STATUS = { D: 'Draft', P: 'Published', C: 'Closed' }
+export const EVENT_STATUS = { D: 'Draft', P: 'Published', C: 'Closed', A: 'Archived' }
 export const PLAY_MODE = { I: 'Individual', T: 'Teams' }
 export const PART_STATUS = { P: 'Pending', A: 'Active' }
 export const REGISTRATION_STATUS = {
@@ -30,16 +30,27 @@ export function isYes(value) {
   return String(value ?? '').trim().toUpperCase() === 'Y'
 }
 
-// The phase only exists for published events; a closed one is "Closed".
-export function eventPhase({ eventStatus, phase }) {
-  if (String(eventStatus ?? '').trim().toUpperCase() === 'C') return 'Closed'
-  return label(PHASE, phase)
+// Closed or archived: nothing about the event can change any more (08 53)
+export function isReadOnly({ eventStatus }) {
+  const s = String(eventStatus ?? '').trim().toUpperCase()
+  return s === 'C' || s === 'A'
+}
+
+export function isArchived({ eventStatus }) {
+  return String(eventStatus ?? '').trim().toUpperCase() === 'A'
+}
+
+// The phase only exists for published events; a closed one is "Closed", an
+// archived one "Archived".
+export function eventPhase(event) {
+  if (isReadOnly(event)) return label(EVENT_STATUS, event.eventStatus)
+  return label(PHASE, event.phase)
 }
 
 // Running or frozen: flags can be submitted and hints unlocked.
-export function isPlayable({ eventStatus, phase }) {
-  const p = String(phase ?? '').trim().toUpperCase()
-  return String(eventStatus ?? 'P').trim().toUpperCase() !== 'C' && (p === 'R' || p === 'F')
+export function isPlayable(event) {
+  const p = String(event.phase ?? '').trim().toUpperCase()
+  return !isReadOnly(event) && (p === 'R' || p === 'F')
 }
 
 // attemptsLeft is -1 when there is no limit.

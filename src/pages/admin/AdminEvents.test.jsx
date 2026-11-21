@@ -38,6 +38,16 @@ describe('the admin event list', () => {
     expect(window.location.search).toBe('?status=D')
     expect(screen.getByRole('button', { name: 'Drafts' })).toHaveAttribute('aria-pressed', 'true')
   })
+
+  it('shows archived events only under their filter', async () => {
+    asOrganizer()
+    openApp('/admin')
+    const table = await screen.findByRole('table')
+    expect(names(table)).not.toContain('Spring CTF 2025')
+    await userEvent.click(screen.getByRole('button', { name: 'Archived' }))
+    await vi.waitFor(() => expect(names(screen.getByRole('table'))).toEqual(['Spring CTF 2025']))
+    expect(window.location.search).toBe('?status=A')
+  })
 })
 
 describe('a new event', () => {
@@ -63,7 +73,7 @@ describe('a new event', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create draft' }))
 
     expect(await screen.findByRole('heading', { name: 'Spring 2027' })).toBeInTheDocument()
-    expect(window.location.search).toBe('?eventID=7')
+    expect(window.location.search).toBe('?eventID=8')
     const sent = calls.find((c) => c.method === 'POST').body
     expect(sent).toMatchObject({
       eventStatus: 'D', playMode: 'T', maxTeamSize: 4, maxPlayers: 100, racfGroup: 'CTFTEST', freezeTS: '',
@@ -153,7 +163,9 @@ describe('an event', () => {
     expect(await screen.findByText(/this event is closed/i)).toBeInTheDocument()
     expect(screen.getByLabelText('Name')).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Status' })).not.toBeInTheDocument()
+    const status = screen.getByRole('region', { name: 'Status' })
+    expect(within(status).getByRole('button', { name: 'Archive' })).toBeInTheDocument()
+    expect(within(status).queryByRole('button', { name: 'Close event' })).not.toBeInTheDocument()
   })
 
   it('says when the event does not exist', async () => {
@@ -171,7 +183,7 @@ describe('closing an event', () => {
     await confirm('Close event', 'Close and offboard')
     expect(await screen.findByText(/nothing about it can change any more/)).toBeInTheDocument()
     expect(screen.getByLabelText('Name')).toBeDisabled()
-    expect(screen.queryByRole('region', { name: 'Status' })).not.toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'Status' })).getByRole('button', { name: 'Archive' })).toBeInTheDocument()
     expect(calls.some((c) => c.method === 'POST' && c.path === '/admin/eventClosures/4')).toBe(true)
     expect(db.data.provJobs.filter((j) => j.eventID === 4 && j.provAction === 'M')).toHaveLength(4)
   })
@@ -181,5 +193,21 @@ describe('closing an event', () => {
     openApp('/admin/event?eventID=1')
     expect(await screen.findByText(/it can be closed after its end/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Close event' })).not.toBeInTheDocument()
+  })
+})
+
+describe('archiving an event', () => {
+  it('archives a closed event, and restores it', async () => {
+    const { calls } = asOrganizer()
+    openApp('/admin/event?eventID=5')
+    await screen.findByText(/this event is closed/i)
+    await confirm('Archive', 'Archive')
+    expect(await screen.findByText(/this event is archived/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Name')).toBeDisabled()
+    expect(calls.some((c) => c.method === 'POST' && c.path === '/admin/eventArchives/5')).toBe(true)
+
+    await confirm('Restore', 'Restore')
+    expect(await screen.findByText(/this event is closed/i)).toBeInTheDocument()
+    expect(calls.some((c) => c.method === 'DELETE' && c.path === '/admin/eventArchives/5')).toBe(true)
   })
 })

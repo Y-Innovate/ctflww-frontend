@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { attemptsText, eventPhase, isPlayable, isYes, label, PLAY_MODE } from './codes'
+import { attemptsText, eventPhase, isArchived, isPlayable, isReadOnly, isYes, label, PLAY_MODE } from './codes'
 
 it('translates codes, and shows unknown ones as they are', () => {
   expect(label(PLAY_MODE, 'T')).toBe('Teams')
@@ -18,6 +18,16 @@ it('reads Y/N', () => {
 it('gives a closed event the phase Closed', () => {
   expect(eventPhase({ eventStatus: 'P', phase: 'F' })).toBe('Frozen')
   expect(eventPhase({ eventStatus: 'C', phase: '' })).toBe('Closed')
+  expect(eventPhase({ eventStatus: 'A', phase: '' })).toBe('Archived')
+})
+
+it('treats closed and archived events as read-only', () => {
+  expect(isReadOnly({ eventStatus: 'C' })).toBe(true)
+  expect(isReadOnly({ eventStatus: 'A' })).toBe(true)
+  expect(isReadOnly({ eventStatus: 'P' })).toBe(false)
+  expect(isReadOnly({ eventStatus: 'D' })).toBe(false)
+  expect(isArchived({ eventStatus: 'A' })).toBe(true)
+  expect(isArchived({ eventStatus: 'C' })).toBe(false)
 })
 
 it('knows when flags can be submitted', () => {
@@ -25,6 +35,7 @@ it('knows when flags can be submitted', () => {
   expect(isPlayable({ phase: 'F' })).toBe(true)
   expect(isPlayable({ eventStatus: 'P', phase: 'E' })).toBe(false)
   expect(isPlayable({ eventStatus: 'C', phase: 'R' })).toBe(false)
+  expect(isPlayable({ eventStatus: 'A', phase: 'R' })).toBe(false)
 })
 
 it('writes attempts left', () => {

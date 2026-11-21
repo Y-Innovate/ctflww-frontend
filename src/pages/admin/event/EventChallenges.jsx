@@ -7,7 +7,7 @@ import {
 import ConfirmButton from '../../../components/ConfirmButton'
 import ErrorBanner from '../../../components/ErrorBanner'
 import { useFullList } from '../../../hooks/useFullList'
-import { isYes } from '../../../lib/codes'
+import { eventPhase, isReadOnly, isYes } from '../../../lib/codes'
 import { ADMIN_PATHS, linkTo } from '../../../routes'
 import ScoringForm from './ScoringForm'
 
@@ -33,7 +33,7 @@ export default function EventChallenges({ event }) {
   const library = useFullList(libraryChallenges, {})
   const [editing, setEditing] = useState(null)
   const [error, setError] = useState(null)
-  const closed = event.eventStatus === 'C'
+  const closed = isReadOnly(event)
   const live = event.eventStatus === 'P' && (event.phase === 'R' || event.phase === 'F')
 
   const rows = [...list.rows].sort((a, b) => a.sortOrder - b.sortOrder || a.challengeID - b.challengeID)
@@ -56,7 +56,7 @@ export default function EventChallenges({ event }) {
   return (
     <div className="flex flex-col gap-4">
       {closed && (
-        <p className="rounded-md bg-surface-2 px-4 py-2.5 text-[13px] text-fg-2">This event is closed: its challenges can no longer change.</p>
+        <p className="rounded-md bg-surface-2 px-4 py-2.5 text-[13px] text-fg-2">This event is {eventPhase(event).toLowerCase()}: its challenges can no longer change.</p>
       )}
       {live && (
         <p role="note" className="rounded-md bg-warning-bg px-4 py-2.5 text-[13px] text-warning-fg">

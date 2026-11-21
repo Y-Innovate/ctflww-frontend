@@ -204,10 +204,13 @@ export function createDb(seed, clock = () => new Date()) {
       return ok({ racfUserid: p.racfUserid, name: p.displayName.toUpperCase(), role: 'P', playerID: p.playerID, displayName: p.displayName })
     },
 
+    // CTFM202: published and closed; eventStatus_filter P, C or A: only that
     listEvents(query) {
       const since = int(query.eventID_since)
+      const status = String(query.eventStatus_filter ?? '').trim().toUpperCase()
+      const wanted = status ? [status] : ['P', 'C']
       const rows = d.events
-        .filter((e) => e.eventStatus !== 'D' && (!since || e.eventID < since))
+        .filter((e) => e.eventStatus !== 'D' && wanted.includes(e.eventStatus) && (!since || e.eventID < since))
         .sort((a, b) => b.eventID - a.eventID)
       return ok({ events: page(rows).map(publicEvent) })
     },
